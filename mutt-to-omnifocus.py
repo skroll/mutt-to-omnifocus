@@ -4,6 +4,7 @@ import sys
 import os
 import getopt
 import email.parser
+import collections
 
 def xstr(s):
     """
@@ -45,8 +46,10 @@ def parse_message(raw):
     order).
     """
 
+    msg = collections.namedtuple('Message', ['headers', 'body'])
+
     # Create a Message object
-    message = email.parser.Parser().parsestr(raw, headersonly=True)
+    message = email.parser.Parser().parsestr(raw, headersonly=False)
 
     # Extract relevant headers
     list = [("Date", message.get("Date")),
@@ -54,16 +57,17 @@ def parse_message(raw):
             ("Subject", message.get("Subject")),
             ("Message-ID", message.get("Message-ID"))]
 
-    return list
+    return msg(headers=list, body=message.get_payload())
 
-def send_to_omnifocus(params, quickentry=False):
+def send_to_omnifocus(message, quickentry=False):
     """Take the list of significant headers and create an OmniFocus inbox item
     from these.
     """
 
     # name and note of the task (escaped as per applescript_escape())
-    name = "Mutt: %s" % applescript_escape(dict(params)["Subject"])
-    note = "\n".join(["%s: %s" % (k, applescript_escape(xstr(v))) for (k, v) in params])
+    name = "Mutt: %s" % applescript_escape(dict(message.headers)["Subject"])
+    note = "\n".join(["%s: %s" % (k, applescript_escape(xstr(v))) for (k, v) in message.headers])
+    note += "\n\n" + message.body
 
     # Write the Applescript
     if quickentry:
