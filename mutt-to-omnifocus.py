@@ -5,6 +5,14 @@ import os
 import getopt
 import email.parser
 
+def xstr(s):
+    """
+    Return a string unless it is None, in which case return an empty string.
+    """
+    if s is None:
+        return ''
+    return str(s)
+
 def usage():
     print """
     Take an RFC-compliant e-mail message on STDIN and add a
@@ -55,7 +63,7 @@ def send_to_omnifocus(params, quickentry=False):
 
     # name and note of the task (escaped as per applescript_escape())
     name = "Mutt: %s" % applescript_escape(dict(params)["Subject"])
-    note = "\n".join(["%s: %s" % (k, applescript_escape(v)) for (k, v) in params])
+    note = "\n".join(["%s: %s" % (k, applescript_escape(xstr(v))) for (k, v) in params])
 
     # Write the Applescript
     if quickentry:
